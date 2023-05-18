@@ -1,5 +1,5 @@
 export default function Page() {
   return <div>
-    <h1>Persons</h1>
+    <h1>Absences</h1>
   </div>
 }
