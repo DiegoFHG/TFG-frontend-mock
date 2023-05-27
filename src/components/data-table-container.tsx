@@ -3,7 +3,6 @@
 import { ColumnDef } from "@tanstack/react-table";
 import { useEffect, useRef, useState } from "react";
 import { DataTable } from "./data-table";
-import Pagination from "./pagination";
 import { Button } from "./button";
 import http from "@/lib/http";
 
