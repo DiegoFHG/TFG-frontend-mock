@@ -7,6 +7,7 @@ import {
 } from "@/app/person-columns";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/card";
 import { Checkbox } from "@/components/checkbox";
+import { Contract } from "@/components/contract";
 import { Label } from "@/components/label";
 import PersonSection from "@/components/person-section";
 import SectionContent from "@/components/section-content";
@@ -132,9 +133,9 @@ async function getPersonEmergencyContacts(personId: string) {
   return data;
 }
 
-async function getPersonTitulations(personId: string) {
+async function getPersonContracts(personId: string) {
   const data = await (
-    await http(`/persons/${personId}/titulations`, { cache: "no-store" })
+    await http(`/persons/${personId}/contracts`, { cache: "no-store" })
   ).json();
 
   return data;
@@ -145,10 +146,11 @@ export default async function Page({
 }: {
   params: { id: string };
 }) {
-  const [person, bankAccounts, emergencyContacts] = await Promise.all([
+  const [person, bankAccounts, emergencyContacts, contracts] = await Promise.all([
     getPerson(id),
     getPersonBankAccounts(id),
     getPersonEmergencyContacts(id),
+    getPersonContracts(id)
   ]);
 
   const ascendantsList = person.ascendents.map((ascendant: Ascendant) => (
@@ -276,6 +278,8 @@ export default async function Page({
       </div>
     )
   );
+
+  const contractsList = contracts.data.map((contract: Contract) => <Contract key={`contract-${contract.id}`} data={contract} />)
 
   return (
     <div className="pl-32 pr-32">
@@ -455,15 +459,31 @@ export default async function Page({
 
           <PersonSection title="Datos profesionales" />
           <SectionContent>
-            <TextLabel label="Tipo" text={professionalTypes[person.professional?.type]} />
-            <TextLabel label="Facultad/escuela" text={professionalFaculties[person.professional?.faculty]} />
-            <TextLabel label="Departamento" text={professionalDepartments[person.professional?.department]} />
-            <TextLabel label="Campo de conocimiento" text={person.professional?.field} />
+            <TextLabel
+              label="Tipo"
+              text={professionalTypes[person.professional?.type]}
+            />
+            <TextLabel
+              label="Facultad/escuela"
+              text={professionalFaculties[person.professional?.faculty]}
+            />
+            <TextLabel
+              label="Departamento"
+              text={professionalDepartments[person.professional?.department]}
+            />
+            <TextLabel
+              label="Campo de conocimiento"
+              text={person.professional?.field}
+            />
             <TextLabel label="Cargo" text={person.professional?.position} />
           </SectionContent>
 
           <PersonSection title="Relación jurídica" />
-          <SectionContent></SectionContent>
+          {contractsList.length > 0 ? (
+            contractsList
+          ) : (
+            <span>Esta persona no tiene contratos.</span>
+          )}
         </CardContent>
       </Card>
     </div>
