@@ -2,7 +2,7 @@ import { dedicationOptions, titulationOptions } from "@/app/persons/[id]/page";
 import TextLabel from "./text-label";
 import SectionContent from "./section-content";
 
-type StayContract = {
+export type StayContract = {
   proccedenceEntity: string;
   department: string;
   responsablePerson: string;
@@ -16,7 +16,7 @@ type AnualRetribution = {
   concept: string;
 };
 
-type LaboralContract = {
+export type LaboralContract = {
   entity: string;
   modality: string;
   professionalGroup: string;
@@ -25,28 +25,28 @@ type LaboralContract = {
   location: string;
   schedule: keyof typeof schedules;
   hours: number;
-  startDate: Date;
-  endDate: Date;
-  trialPeriod: string[];
+  startDate: string;
+  endDate: string;
+  trialPeriod: Date | string[] | { start: string; end: string };
   collectiveAgreement: keyof typeof agreements;
   anualRetribution: AnualRetribution;
   undefinedEndDate: boolean;
 };
 
-type CommercialContractFreelance = {
+export type CommercialContractFreelance = {
   entity: string;
   location: string;
   department: string;
-  printDate: Date;
+  printDate: string;
   modality: number;
-  startDate: Date;
-  endDate: Date;
+  startDate: string;
+  endDate: string;
   hours: number;
   subjects: string[];
   amount: number;
 };
 
-type CommercialContractCommercialSocietyData = {
+export type CommercialContractCommercialSocietyData = {
   societyName: string;
   societyCif: string;
   societyRegisteredOffice: string;
@@ -59,11 +59,11 @@ type CommercialContractCommercialSocietyData = {
 type CommercialContractCompany = CommercialContractFreelance &
   CommercialContractCommercialSocietyData;
 
-type CommercialContract =
+export type CommercialContract =
   | CommercialContractCompany
   | CommercialContractFreelance;
 
-type AdHonoremContract = {
+export type AdHonoremContract = {
   degree: string;
   governingCouncilDate: Date;
   validityDate: Date;
@@ -71,7 +71,7 @@ type AdHonoremContract = {
   appointmentAcceptanceDate: Date;
 };
 
-type InternshipContract = {
+export type InternshipContract = {
   level: keyof typeof levels;
   titulation: keyof typeof titulationOptions;
   startDate: Date;
@@ -93,12 +93,17 @@ export type Contract = {
     | LaboralContract;
 };
 
-const schedules = {
+export const commercialContractModalities = {
+  0: 'Autónomo',
+  1: 'Empresa'
+}
+
+export const schedules = {
   0: "Tiempo completo",
   1: "Tiempo parcial",
 };
 
-const agreements = {
+export const agreements = {
   //UNEATLANTICO O CITICAN
   0: "XII Convenio de ámbito estatal para los centros de educación universitaria e investigación",
   // MLS (3)
@@ -108,10 +113,148 @@ const agreements = {
   1: "IV Convenio colectivo estatal de instalaciones deportivas y gimnasios",
 };
 
-const levels = {
+export const levels = {
   0: "Grado",
   1: "Máster",
   2: "Doctorado",
+};
+
+export const entities = {
+  0: "Uneatlántico",
+  1: "Citican",
+  2: "Promociones Proibero",
+  3: "MLS Journals",
+  4: "Otros",
+};
+
+export const modalities = {
+  0: "Indefinido",
+  1: "Temporal",
+};
+
+export const categories = [
+  {
+    0: "Ordinario o Catedrático",
+    1: "Agregado o Titular",
+    2: "Adjunto",
+    3: "Contratado Doctor",
+    4: "Colaborador licenciado",
+    5: "Ayudante Doctor",
+    6: "Auxiliar/Ayudante",
+    7: "Asociado",
+    8: "Investigador",
+    9: "Colaborador de Investigación",
+    10: "Ayudante de Investigación",
+    11: "Profesor Emérito",
+    12: "Profesor Visitante e Invitado",
+    13: "Titulado de Grado Superior",
+    14: "Titulado de Grado Medio",
+    15: "Jefe Superior",
+    16: "Jefe de Sección",
+    17: "Jefe de Negociado",
+    18: "Subjefe de Negociado",
+    19: "Oficial de primera",
+    20: "Oficial de segunda",
+  },
+  {
+    0: "Director/Directora General",
+    1: "Director/Directora de División",
+    2: "Director/Directora de Departamento",
+    3: "Titulado/Titulada de Grado Superior",
+    4: "Jefe/Jefa de Compras",
+    5: "Jefe/Jefa de Personal",
+    6: "Jefe/Jefa de Informática",
+    7: "Jefe/Jefa Financiero",
+    8: "Titulado/Titulada de Grado Medio",
+    9: "Responsable de Sección",
+    10: "Contable",
+    11: "Oficial Administrativo/Oficiala Administrativa",
+    12: "Programador/Programadora",
+    13: "Administrativo/Administrativa-Atención al cliente",
+    14: "Técnico/Técnica Mantenimiento Informático",
+    15: "Técnico/Técnica Sistemas de Información",
+    16: "Auxiliar Administrativo/Administrativa",
+    17: "Telefonista",
+    18: "Jefe/Jefa de ventas",
+    19: "Encargado/Encargada General",
+    20: "Gerente de Establecimiento",
+    21: "Jefe/Jefa de Grupo",
+    22: "Encargado/Encargada de Establecimiento",
+    23: "Jefe/Jefa de Sucursal",
+    24: "Jefe/Jefa de sección mercantil",
+    25: "Dependiente/Dependienta",
+    26: "Técnico/Técnica de Comercio Exterior",
+    27: "Representante Comercial",
+    28: "Administrativo/Administrativa Atención al cliente",
+    29: "Oficial Administrativo/Oficiala Administrativa",
+    30: "Teleoperador/Teleoperadora",
+    31: "Auxiliar de Caja",
+    32: "Auxiliar Administrativo/Administrativa",
+    33: "Asistente Establecimiento",
+    34: "Jefe/Jefa de Sección Logística",
+    35: "Jefe/Jefa de Almacén",
+    36: "Jefe/Jefa de Transporte",
+    37: "Encargado/Encargada de Unidad Logística",
+    38: "Profesionaal de Oficio 1.a",
+    39: "Repartidor Conductor/Repartidora Conductora",
+    40: "Profesional de Oficio 2.a",
+    41: "Operario Logística/Operaria Logística",
+    42: "Auxiliar Administrativo/Auxiliar Administrativa",
+    43: "Mozo Empaquetador/Moza Empaquetadora",
+    44: "Personal de Servicios Auxiliares",
+    45: "Personal de limpieza por horas* (este cálculo está hecho en base de una hora diaria con derecho a 15 pagas y un mes de vacaciones)",
+    46: "Dieta media jornada",
+    47: "Dieta jornada completa",
+  },
+  {
+    0: "Jefe Recepción",
+    1: "Jede Administración",
+    2: "Jefe Comercial",
+    3: "Jefe Catering",
+    4: "Jefe Cocina",
+    5: "Jefe Restaurante/Sala",
+    6: "Jefe Recepción 2",
+    7: "Primer Conserje",
+    8: "2° Jefe Cocina",
+    9: "Jefe Operaciones Cater",
+    10: "2° Jefe Restaurante/Sala",
+    11: "Recepcionista",
+    12: "Administrativo",
+    13: "Relaciones públicas",
+    14: "Comercial",
+    15: "Jefe Partida",
+    16: "Repostero",
+    17: "Encargado Economato",
+    18: "Jefe Sector",
+    19: "Jefe Sala Catering",
+    20: "Encargado General",
+    21: "Encargado Sección",
+    22: "Encargado Mant/Servic",
+    23: "Conserje",
+    24: "Cocinero",
+    25: "Jefe Equipo/Superv Catering",
+    26: "Ayudante Administrativo",
+    27: "Telefonista",
+    28: "Conductor Catering",
+    29: "Especialista Mant/Servicio",
+    30: "Camarero",
+    31: "Barman/Sumiller",
+    32: "Ayte. Recepción/Conserje",
+    33: "Ayud/Auxiliar Cocina",
+    34: "Ayud/Auxiliar Catering",
+    35: "Ayudante Camarero",
+    36: "Camarero Pisos",
+    37: "Aux. Recepción/Conserj.",
+    38: "Aux Pisos/Limpieza",
+    39: "Aux Manten/Servicios",
+  },
+  { 0: "Grupo 1", 1: "Grupo 2", 2: "Grupo 3", 3: "Grupo 4", 4: "Grupo 5" },
+];
+
+export const locations = {
+  0: "Santander",
+  1: "Barcelona",
+  2: "Otros",
 };
 
 export function Contract({ data }: { data: Contract }) {
@@ -146,9 +289,9 @@ export function Contract({ data }: { data: Contract }) {
           />
           <TextLabel
             label="Periodo de prueba"
-            text={contract.trialPeriod
-              .map((date) => new Date(date).toLocaleDateString())
-              .join(", ")}
+            text={Array.isArray(contract.trialPeriod) ? contract.trialPeriod
+              .map((date: string) => new Date(date).toLocaleDateString())
+              .join(", ") : ''}
           />
           <TextLabel
             label="Retribución"
@@ -342,8 +485,8 @@ export function Contract({ data }: { data: Contract }) {
           />
           <TextLabel
             label="Beca residencia"
-            text={contract.residencyInternship ? 'Si' : 'No'}
-          /> 
+            text={contract.residencyInternship ? "Si" : "No"}
+          />
         </SectionContent>
         <hr />
       </div>
@@ -380,8 +523,8 @@ export function Contract({ data }: { data: Contract }) {
           />
           <TextLabel
             label="Beca residencia"
-            text={contract.residencyInternship ? 'Si' : 'No'}
-          /> 
+            text={contract.residencyInternship ? "Si" : "No"}
+          />
         </SectionContent>
         <hr />
       </div>
@@ -395,11 +538,23 @@ export function Contract({ data }: { data: Contract }) {
       <div className="mb-3">
         <h3 className="text-lg mb-3">Estancia de profesorado</h3>
         <SectionContent>
-          <TextLabel label="Entidad de procedencia" text={contract.proccedenceEntity} />
+          <TextLabel
+            label="Entidad de procedencia"
+            text={contract.proccedenceEntity}
+          />
           <TextLabel label="Departamento" text={contract.department} />
-          <TextLabel label="Responsable en el centro de acogida" text={contract.responsablePerson} />
-          <TextLabel label="Fecha inicio" text={new Date(contract.startDate).toLocaleDateString()} />
-          <TextLabel label="Fecha fin" text={new Date(contract.endDate).toLocaleDateString()} />
+          <TextLabel
+            label="Responsable en el centro de acogida"
+            text={contract.responsablePerson}
+          />
+          <TextLabel
+            label="Fecha inicio"
+            text={new Date(contract.startDate).toLocaleDateString()}
+          />
+          <TextLabel
+            label="Fecha fin"
+            text={new Date(contract.endDate).toLocaleDateString()}
+          />
         </SectionContent>
         <hr />
       </div>
@@ -413,11 +568,23 @@ export function Contract({ data }: { data: Contract }) {
       <div className="mb-3">
         <h3 className="text-lg mb-3">Estancia investigación</h3>
         <SectionContent>
-          <TextLabel label="Entidad de procedencia" text={contract.proccedenceEntity} />
+          <TextLabel
+            label="Entidad de procedencia"
+            text={contract.proccedenceEntity}
+          />
           <TextLabel label="Departamento" text={contract.department} />
-          <TextLabel label="Responsable en el centro de acogida" text={contract.responsablePerson} />
-          <TextLabel label="Fecha inicio" text={new Date(contract.startDate).toLocaleDateString()} />
-          <TextLabel label="Fecha fin" text={new Date(contract.endDate).toLocaleDateString()} />
+          <TextLabel
+            label="Responsable en el centro de acogida"
+            text={contract.responsablePerson}
+          />
+          <TextLabel
+            label="Fecha inicio"
+            text={new Date(contract.startDate).toLocaleDateString()}
+          />
+          <TextLabel
+            label="Fecha fin"
+            text={new Date(contract.endDate).toLocaleDateString()}
+          />
         </SectionContent>
         <hr />
       </div>

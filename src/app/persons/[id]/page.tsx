@@ -1,3 +1,5 @@
+'use client'
+
 import {
   Accreditation,
   Ascendant,
@@ -13,6 +15,7 @@ import PersonSection from "@/components/person-section";
 import SectionContent from "@/components/section-content";
 import TextLabel from "@/components/text-label";
 import http from "@/lib/http";
+import { useRouter } from "next/navigation";
 
 type BankAccount = {
   id: string;
@@ -97,7 +100,6 @@ export const professionalDepartments = {
   12: "Webmáster",
   13: "Ordenación Académica",
   14: "Biblioteca",
-  15: "-",
 };
 
 export const professionalFields = [
@@ -146,6 +148,7 @@ export default async function Page({
 }: {
   params: { id: string };
 }) {
+  const router = useRouter()
   const [person, bankAccounts, emergencyContacts, contracts] = await Promise.all([
     getPerson(id),
     getPersonBankAccounts(id),
@@ -153,7 +156,11 @@ export default async function Page({
     getPersonContracts(id)
   ]);
 
-  const ascendantsList = person.ascendents.map((ascendant: Ascendant) => (
+  function goToCreateContract() {
+    router.push(`/persons/${id}/contracts/create`)
+  }
+
+  const ascendantsList = person.ascendents?.map((ascendant: Ascendant) => (
     <div key={`ascendant-${ascendant.id}`} className="mb-3">
       <div className="grid grid-flow-row grid-cols-3">
         <TextLabel label="Nombre" text={ascendant.name} />
@@ -178,7 +185,7 @@ export default async function Page({
     </div>
   ));
 
-  const descendantsList = person.descendents.map((descendant: Descendant) => (
+  const descendantsList = person.descendents?.map((descendant: Descendant) => (
     <div key={`descendant-${descendant.id}`} className="mb-3">
       <div className="grid grid-flow-row grid-cols-3">
         <TextLabel label="Nombre" text={descendant.name} />
@@ -391,13 +398,13 @@ export default async function Page({
           <PersonSection title="Familiares" />
           <div className="mb-3">
             <h3 className="text-lg mb-2">Ascendientes</h3>
-            {ascendantsList.length > 0 ? (
+            {ascendantsList?.length > 0 ? (
               <div>{ascendantsList}</div>
             ) : (
               <span>Esta persona no tiene ascendientes.</span>
             )}
             <h3 className="text-lg mb-2">Descendientes</h3>
-            {descendantsList.length > 0 ? (
+            {descendantsList?.length > 0 ? (
               <div>{descendantsList}</div>
             ) : (
               <span>Esta persona no tiene descendientes.</span>
@@ -406,7 +413,7 @@ export default async function Page({
 
           <PersonSection title="Datos bancarios" />
           <div className="mb-3">
-            {bankAccountsList.length > 0 ? (
+            {bankAccountsList?.length > 0 ? (
               <div>{bankAccountsList}</div>
             ) : (
               <span>Esta persona no tiene cuentas bancarias.</span>
@@ -415,7 +422,7 @@ export default async function Page({
 
           <PersonSection title="Contactos de emergencia" />
           <div className="mb-3">
-            {emergencyContactsList.length > 0 ? (
+            {emergencyContactsList?.length > 0 ? (
               <div>{emergencyContactsList}</div>
             ) : (
               <span>Esta persona no tiene contactos de emergencia.</span>
@@ -427,21 +434,21 @@ export default async function Page({
             <TextLabel
               label="Maxima categoría de estudios finalizados"
               text={
-                maximumStudiesCategories[person.academics.maximumStudies] ??
+                maximumStudiesCategories[person.academics?.maximumStudies] ??
                 "N/A"
               }
             />
             <TextLabel
               label="Agencia acreditadora"
-              text={person.academics.accreditationAgency}
+              text={person.academics?.accreditationAgency}
             />
             <TextLabel
               label="Dedicación"
-              text={dedicationOptions[person.academics.dedication]}
+              text={dedicationOptions[person.academics?.dedication]}
             />
             <TextLabel
               label="Titulación"
-              text={titulationOptions[person.academics.titulation]}
+              text={titulationOptions[person.academics?.titulation]}
             />
           </SectionContent>
           <h3 className="text-lg mb-2">Titulaciones</h3>
@@ -478,7 +485,7 @@ export default async function Page({
             <TextLabel label="Cargo" text={person.professional?.position} />
           </SectionContent>
 
-          <PersonSection title="Relación jurídica" />
+          <PersonSection title="Relación jurídica" onActionClick={goToCreateContract} />
           {contractsList.length > 0 ? (
             contractsList
           ) : (
