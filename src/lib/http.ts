@@ -10,8 +10,6 @@ function fetchBaseUrl(): FetchFunction {
   }
 }
 
-
 const http: FetchFunction = fetchBaseUrl()
-
 
 export default http

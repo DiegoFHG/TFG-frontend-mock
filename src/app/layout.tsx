@@ -1,9 +1,6 @@
-import Link from 'next/link'
+import { Toaster } from '@/components/toaster'
 import './globals.css'
-import { Inter } from 'next/font/google'
 import NavBar from '@/components/navbar'
-
-const inter = Inter({ subsets: ['latin'] })
 
 export const metadata = {
   title: 'Create Next App',
@@ -20,6 +17,7 @@ export default function RootLayout({
       <body>
         <NavBar />
         <div className='p-32'>{children}</div>
+        <Toaster />
       </body>
     </html>
   )

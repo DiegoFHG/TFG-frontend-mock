@@ -1,4 +1,4 @@
-import { dedicationOptions, titulationOptions } from "@/app/persons/[id]/page";
+import { titulationOptions } from "@/app/persons/[id]/page";
 import TextLabel from "./text-label";
 import SectionContent from "./section-content";
 
@@ -6,8 +6,8 @@ export type StayContract = {
   proccedenceEntity: string;
   department: string;
   responsablePerson: string;
-  startDate: Date;
-  endDate: Date;
+  startDate: string;
+  endDate: string;
 };
 
 type AnualRetribution = {
@@ -65,17 +65,17 @@ export type CommercialContract =
 
 export type AdHonoremContract = {
   degree: string;
-  governingCouncilDate: Date;
-  validityDate: Date;
-  agreementPrintDate: Date;
-  appointmentAcceptanceDate: Date;
+  governingCouncilDate: string;
+  validityDate: string;
+  // agreementPrintDate: string;
+  appointmentAcceptanceDate: string;
 };
 
 export type InternshipContract = {
   level: keyof typeof levels;
   titulation: keyof typeof titulationOptions;
-  startDate: Date;
-  endDate: Date;
+  startDate: string;
+  endDate: string;
   internshipAmount: number;
   feeExemption: number;
   residencyInternship: boolean;

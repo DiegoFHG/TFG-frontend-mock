@@ -4,6 +4,7 @@ import { Card, CardContent } from "@/components/card";
 import {
   CommercialContract,
   LaboralContract,
+  AdHonoremContract,
   agreements,
   categories,
   commercialContractModalities,
@@ -11,6 +12,9 @@ import {
   locations,
   modalities,
   schedules,
+  InternshipContract,
+  levels,
+  StayContract,
 } from "@/components/contract";
 import {
   Form,
@@ -29,10 +33,14 @@ import {
 } from "@/components/select";
 import { Select } from "@radix-ui/react-select";
 import { useState } from "react";
-import { useForm } from "react-hook-form";
-import { dedicationOptions } from "../../page";
+import { SubmitHandler, useForm } from "react-hook-form";
+import { dedicationOptions, titulationOptions } from "../../page";
 import { Button } from "@/components/button";
 import React from "react";
+import { Switch } from "@/components/switch";
+import http from "@/lib/http";
+import { useRouter } from "next/navigation";
+import { useToast } from "@/components/use-toast";
 
 const contractTypes = {
   0: "Contrato laboral",
@@ -44,12 +52,56 @@ const contractTypes = {
   6: "Estancia investigación",
 };
 
-export default function Page() {
+export default function Page({ params: { id } }: { params: { id: string } }) {
   const [selectedContractType, setSelectedContractType] = useState<
     string | null
   >(null);
   const laboralContractForm = useForm<LaboralContract>();
   const commercialContractForm = useForm<CommercialContract>();
+  const adHonoremContractFrom = useForm<AdHonoremContract>();
+  const colaborationInternshipContractForm = useForm<InternshipContract>();
+  const phdInternshipContractForm = useForm<InternshipContract>();
+  const stayContractForm = useForm<StayContract>();
+  const investigationContractForm = useForm<StayContract>();
+  const router = useRouter()
+  const { toast } = useToast()
+
+  const onSubmit: SubmitHandler<
+    | StayContract
+    | LaboralContract
+    | CommercialContract
+    | InternshipContract
+    | AdHonoremContract
+  > = async (
+    data:
+      | StayContract
+      | LaboralContract
+      | CommercialContract
+      | InternshipContract
+      | AdHonoremContract,
+    e: any
+  ) => {
+    e.preventDefault();
+    if (selectedContractType !== null) {
+      const formDataContract = new FormData();
+      formDataContract.append("person", id);
+      formDataContract.append("contractType", selectedContractType);
+      formDataContract.append("contract", JSON.stringify(data));
+
+      const createContract = await http("/contracts", {
+        method: "POST",
+        body: formDataContract,
+      });
+
+      if (createContract.status === 200) {
+        router.push(`/persons/${id}`)
+      }
+      
+      if (createContract.status === 400) {
+        toast({ title: 'Error!', description: 'Los datos no están en el formato requerido o hay datos faltantes' });
+      }
+    }
+  };
 
   function renderContract() {
     if (selectedContractType === null) return null;
@@ -60,7 +112,7 @@ export default function Page() {
 
       return (
         <Form {...form}>
-          <form>
+          <form onSubmit={form.handleSubmit(onSubmit)}>
             <div className="grid grid-flow-row grid-cols-3 gap-5">
               <FormField
                 control={form.control}
@@ -320,6 +372,9 @@ export default function Page() {
                 )}
               />
             </div>
+            <div className="flex justify-end">
+              <Button type="submit">Crear</Button>
+            </div>
           </form>
         </Form>
       );
@@ -331,7 +386,7 @@ export default function Page() {
 
       return (
         <Form {...form}>
-          <form>
+          <form onSubmit={form.handleSubmit(onSubmit)}>
             <FormField
               control={form.control}
               name="modality"
@@ -344,14 +399,16 @@ export default function Page() {
                         <SelectValue />
                       </SelectTrigger>
                       <SelectContent>
-                        {Object.entries(commercialContractModalities).map(([key, value]) => (
-                          <SelectItem
-                            key={`commercial-contract-modalities-${key}`}
-                            value={key}
-                          >
-                            {value}
-                          </SelectItem>
-                        ))}
+                        {Object.entries(commercialContractModalities).map(
+                          ([key, value]) => (
+                            <SelectItem
+                              key={`commercial-contract-modalities-${key}`}
+                              value={key}
+                            >
+                              {value}
+                            </SelectItem>
+                          )
+                        )}
                       </SelectContent>
                     </Select>
                   </FormControl>
@@ -524,21 +581,450 @@ export default function Page() {
                 </React.Fragment>
               ) : null}
             </div>
+            <div className="flex justify-end">
+              <Button type="submit">Crear</Button>
+            </div>
           </form>
         </Form>
       );
     }
 
     if (Number(selectedContractType) === 2) {
+      const form = adHonoremContractFrom;
+
+      return (
+        <Form {...form}>
+          <form onSubmit={form.handleSubmit(onSubmit)}>
+            <div className="grid grid-flow-row grid-cols-3 gap-5">
+              <FormField
+                control={form.control}
+                name="governingCouncilDate"
+                render={({ field }) => (
+                  <FormItem>
+                    <FormLabel>Fecha junta consejo de gobierno</FormLabel>
+                    <Input {...field} type="date" />
+                  </FormItem>
+                )}
+              />
+              <FormField
+                control={form.control}
+                name="validityDate"
+                render={({ field }) => (
+                  <FormItem>
+                    <FormLabel>Vigencia del nombramiento</FormLabel>
+                    <Input {...field} type="date" />
+                  </FormItem>
+                )}
+              />
+              <FormField
+                control={form.control}
+                name="degree"
+                render={({ field }) => (
+                  <FormItem>
+                    <FormLabel>Titulación</FormLabel>
+                    <Input {...field} />
+                  </FormItem>
+                )}
+              />
+              <FormField
+                control={form.control}
+                name="governingCouncilDate"
+                render={({ field }) => (
+                  <FormItem>
+                    <FormLabel>Fecha aceptación de nombramiento</FormLabel>
+                    <Input {...field} type="date" />
+                  </FormItem>
+                )}
+              />
+            </div>
+            <div className="flex justify-end">
+              <Button type="submit">Crear</Button>
+            </div>
+          </form>
+        </Form>
+      );
     }
 
     if (Number(selectedContractType) === 3) {
+      const form = colaborationInternshipContractForm;
+
+      return (
+        <Form {...form}>
+          <form onSubmit={form.handleSubmit(onSubmit)}>
+            <div className="grid grid-flow-row grid-cols-3 gap-5">
+              <FormField
+                control={form.control}
+                name="level"
+                render={({ field }) => (
+                  <FormItem>
+                    <FormLabel>Nivel</FormLabel>
+                    <FormControl>
+                      <Select onValueChange={field.onChange}>
+                        <SelectTrigger>
+                          <SelectValue />
+                        </SelectTrigger>
+                        <SelectContent>
+                          {Object.entries(levels).map(([key, value]) => (
+                            <SelectItem
+                              key={`internship-contract-levels-${key}`}
+                              value={key}
+                            >
+                              {value}
+                            </SelectItem>
+                          ))}
+                        </SelectContent>
+                      </Select>
+                    </FormControl>
+                  </FormItem>
+                )}
+              />
+              <FormField
+                control={form.control}
+                name="titulation"
+                render={({ field }) => (
+                  <FormItem>
+                    <FormLabel>Titulación</FormLabel>
+                    <FormControl>
+                      <Select onValueChange={field.onChange}>
+                        <SelectTrigger>
+                          <SelectValue />
+                        </SelectTrigger>
+                        <SelectContent>
+                          {Object.entries(titulationOptions).map(
+                            ([key, value]) => (
+                              <SelectItem
+                                key={`internship-contract-titulations-${key}`}
+                                value={key}
+                              >
+                                {value}
+                              </SelectItem>
+                            )
+                          )}
+                        </SelectContent>
+                      </Select>
+                    </FormControl>
+                  </FormItem>
+                )}
+              />
+              <FormField
+                control={form.control}
+                name="startDate"
+                render={({ field }) => (
+                  <FormItem>
+                    <FormLabel>Fecha inicio</FormLabel>
+                    <Input {...field} type="date" />
+                  </FormItem>
+                )}
+              />
+              <FormField
+                control={form.control}
+                name="endDate"
+                render={({ field }) => (
+                  <FormItem>
+                    <FormLabel>Fecha fin</FormLabel>
+                    <Input {...field} type="date" />
+                  </FormItem>
+                )}
+              />
+              <FormField
+                control={form.control}
+                name="internshipAmount"
+                render={({ field }) => (
+                  <FormItem>
+                    <FormLabel>Importe beca</FormLabel>
+                    <Input {...field} />
+                  </FormItem>
+                )}
+              />
+              <FormField
+                control={form.control}
+                name="feeExemption"
+                render={({ field }) => (
+                  <FormItem>
+                    <FormLabel>% exención de tasas</FormLabel>
+                    <Input {...field} />
+                  </FormItem>
+                )}
+              />
+              <FormField
+                control={form.control}
+                name="residencyInternship"
+                render={({ field }) => (
+                  <FormItem className="flex flex-col">
+                    <FormLabel>Beca residencia</FormLabel>
+                    <FormControl>
+                      <Switch
+                        checked={field.value}
+                        onCheckedChange={field.onChange}
+                      />
+                    </FormControl>
+                  </FormItem>
+                )}
+              />
+            </div>
+            <div className="flex justify-end">
+              <Button type="submit">Crear</Button>
+            </div>
+          </form>
+        </Form>
+      );
     }
 
     if (Number(selectedContractType) === 4) {
+      const form = phdInternshipContractForm;
+
+      return (
+        <Form {...form}>
+          <form onSubmit={form.handleSubmit(onSubmit)}>
+            <div className="grid grid-flow-row grid-cols-3 gap-5">
+              <FormField
+                control={form.control}
+                name="level"
+                render={({ field }) => (
+                  <FormItem>
+                    <FormLabel>Nivel</FormLabel>
+                    <FormControl>
+                      <Select onValueChange={field.onChange}>
+                        <SelectTrigger>
+                          <SelectValue />
+                        </SelectTrigger>
+                        <SelectContent>
+                          {Object.entries(levels).map(([key, value]) => (
+                            <SelectItem
+                              key={`internship-contract-levels-${key}`}
+                              value={key}
+                            >
+                              {value}
+                            </SelectItem>
+                          ))}
+                        </SelectContent>
+                      </Select>
+                    </FormControl>
+                  </FormItem>
+                )}
+              />
+              <FormField
+                control={form.control}
+                name="titulation"
+                render={({ field }) => (
+                  <FormItem>
+                    <FormLabel>Titulación</FormLabel>
+                    <FormControl>
+                      <Select onValueChange={field.onChange}>
+                        <SelectTrigger>
+                          <SelectValue />
+                        </SelectTrigger>
+                        <SelectContent>
+                          {Object.entries(titulationOptions).map(
+                            ([key, value]) => (
+                              <SelectItem
+                                key={`internship-contract-titulations-${key}`}
+                                value={key}
+                              >
+                                {value}
+                              </SelectItem>
+                            )
+                          )}
+                        </SelectContent>
+                      </Select>
+                    </FormControl>
+                  </FormItem>
+                )}
+              />
+              <FormField
+                control={form.control}
+                name="startDate"
+                render={({ field }) => (
+                  <FormItem>
+                    <FormLabel>Fecha inicio</FormLabel>
+                    <Input {...field} type="date" />
+                  </FormItem>
+                )}
+              />
+              <FormField
+                control={form.control}
+                name="endDate"
+                render={({ field }) => (
+                  <FormItem>
+                    <FormLabel>Fecha fin</FormLabel>
+                    <Input {...field} type="date" />
+                  </FormItem>
+                )}
+              />
+              <FormField
+                control={form.control}
+                name="internshipAmount"
+                render={({ field }) => (
+                  <FormItem>
+                    <FormLabel>Importe beca</FormLabel>
+                    <Input {...field} />
+                  </FormItem>
+                )}
+              />
+              <FormField
+                control={form.control}
+                name="feeExemption"
+                render={({ field }) => (
+                  <FormItem>
+                    <FormLabel>% exención de tasas</FormLabel>
+                    <Input {...field} />
+                  </FormItem>
+                )}
+              />
+              <FormField
+                control={form.control}
+                name="residencyInternship"
+                render={({ field }) => (
+                  <FormItem className="flex flex-col">
+                    <FormLabel>Beca residencia</FormLabel>
+                    <FormControl>
+                      <Switch
+                        checked={field.value}
+                        onCheckedChange={field.onChange}
+                      />
+                    </FormControl>
+                  </FormItem>
+                )}
+              />
+            </div>
+            <div className="flex justify-end">
+              <Button type="submit">Crear</Button>
+            </div>
+          </form>
+        </Form>
+      );
     }
 
     if (Number(selectedContractType) === 5) {
+      const form = stayContractForm;
+
+      return (
+        <Form {...form}>
+          <form onSubmit={form.handleSubmit(onSubmit)}>
+            <div className="grid grid-flow-row grid-cols-3 gap-5">
+              <FormField
+                control={form.control}
+                name="proccedenceEntity"
+                render={({ field }) => (
+                  <FormItem>
+                    <FormLabel>Entidad de procedencia</FormLabel>
+                    <Input {...field} />
+                  </FormItem>
+                )}
+              />
+              <FormField
+                control={form.control}
+                name="department"
+                render={({ field }) => (
+                  <FormItem>
+                    <FormLabel>Departamento</FormLabel>
+                    <Input {...field} />
+                  </FormItem>
+                )}
+              />
+              <FormField
+                control={form.control}
+                name="responsablePerson"
+                render={({ field }) => (
+                  <FormItem>
+                    <FormLabel>Responsable en el centro de acogida</FormLabel>
+                    <Input {...field} />
+                  </FormItem>
+                )}
+              />
+              <FormField
+                control={form.control}
+                name="startDate"
+                render={({ field }) => (
+                  <FormItem>
+                    <FormLabel>Fecha inicio</FormLabel>
+                    <Input {...field} type="date" />
+                  </FormItem>
+                )}
+              />
+              <FormField
+                control={form.control}
+                name="endDate"
+                render={({ field }) => (
+                  <FormItem>
+                    <FormLabel>Fecha fin</FormLabel>
+                    <Input {...field} type="date" />
+                  </FormItem>
+                )}
+              />
+            </div>
+            <div className="flex justify-end">
+              <Button type="submit">Crear</Button>
+            </div>
+          </form>
+        </Form>
+      );
+    }
+
+    if (Number(selectedContractType) === 6) {
+      const form = investigationContractForm;
+
+      return (
+        <Form {...form}>
+          <form onSubmit={form.handleSubmit(onSubmit)}>
+            <div className="grid grid-flow-row grid-cols-3 gap-5">
+              <FormField
+                control={form.control}
+                name="proccedenceEntity"
+                render={({ field }) => (
+                  <FormItem>
+                    <FormLabel>Entidad de procedencia</FormLabel>
+                    <Input {...field} />
+                  </FormItem>
+                )}
+              />
+              <FormField
+                control={form.control}
+                name="department"
+                render={({ field }) => (
+                  <FormItem>
+                    <FormLabel>Departamento</FormLabel>
+                    <Input {...field} />
+                  </FormItem>
+                )}
+              />
+              <FormField
+                control={form.control}
+                name="responsablePerson"
+                render={({ field }) => (
+                  <FormItem>
+                    <FormLabel>Responsable en el centro de acogida</FormLabel>
+                    <Input {...field} />
+                  </FormItem>
+                )}
+              />
+              <FormField
+                control={form.control}
+                name="startDate"
+                render={({ field }) => (
+                  <FormItem>
+                    <FormLabel>Fecha inicio</FormLabel>
+                    <Input {...field} type="date" />
+                  </FormItem>
+                )}
+              />
+              <FormField
+                control={form.control}
+                name="endDate"
+                render={({ field }) => (
+                  <FormItem>
+                    <FormLabel>Fecha fin</FormLabel>
+                    <Input {...field} type="date" />
+                  </FormItem>
+                )}
+              />
+            </div>
+            <div className="flex justify-end">
+              <Button type="submit">Crear</Button>
+            </div>
+          </form>
+        </Form>
+      );
     }
 
     return null;
@@ -567,9 +1053,6 @@ export default function Page() {
             </Select>
           </div>
           {renderContract()}
-          <div className="flex justify-end">
-            <Button>Crear</Button>
-          </div>
         </CardContent>
       </Card>
     </div>
