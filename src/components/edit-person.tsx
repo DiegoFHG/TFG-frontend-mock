@@ -1,6 +1,9 @@
 "use client";
 
 import { Card, CardContent } from "@/components/card";
+import PersonSection from "@/components/person-section";
+import { FormInputs } from "@/app/persons/add/page";
+import { SubmitHandler, useForm, useWatch } from "react-hook-form";
 import {
   Form,
   FormControl,
@@ -9,145 +12,85 @@ import {
   FormLabel,
 } from "@/components/form";
 import { Input } from "@/components/input";
-import PersonSection from "@/components/person-section";
-import { RadioGroup, RadioGroupItem } from "@/components/radio-group";
+import { Select } from "@radix-ui/react-select";
 import {
-  Select,
   SelectContent,
   SelectItem,
   SelectTrigger,
   SelectValue,
 } from "@/components/select";
-import { Switch } from "@/components/switch";
-import {
-  useForm,
-  SubmitHandler,
-  useWatch,
-  useFieldArray,
-} from "react-hook-form";
+import { RadioGroup, RadioGroupItem } from "@/components/radio-group";
 import {
   dedicationOptions,
-  degreeTypes,
-  evaluationTypes,
+  maximumStudiesCategories,
   professionalDepartments,
   professionalFaculties,
   professionalTypes,
   titulationOptions,
-} from "../[id]/page";
-import React from "react";
-import { MdDelete } from "react-icons/md";
+} from "@/app/persons/[id]/page";
 import { Button } from "@/components/button";
-import { GrAdd } from "react-icons/gr";
+import { Switch } from "@/components/switch";
 import http from "@/lib/http";
-import { useToast } from "@/components/use-toast";
-import { useRouter } from 'next/navigation'
+import { toast } from '@/components/use-toast'
 
-export type FormInputs = {
-  name: string;
-  lastName: string;
-  idDocument: string;
-  partnerIdDocument: string;
-  socialSecurity: string;
-  nationality: string;
-  dateOfBirth: string;
-  sex: string;
-  discapacityLevel: string;
-  discapacityNeedsHelp: boolean;
-  line: string;
-  city: string;
-  division: string;
-  country: string;
-  postalCode: string;
-  phoneNumber: string;
-  mobilePhoneNumber: string;
-  personalEmail: string;
-  institutionalEmail: string;
-  civilState: string;
-  degrees: [{ type: string; name: string; date: string }];
-  academics: {
-    maximumStudies: string;
-    accreditationAgency: string;
-    dedication: string;
-    titulation: string;
-  };
-  accreditations: [
-    {
-      evaluationType: string;
-      accreditationAgency: string;
-      accreditation: string;
-      startDate: string;
-      endDate: string;
-      date: string;
-    }
-  ];
-  professionalInfo: {
-    type: number;
-    department: number;
-    faculty: number;
-    field: string;
-    area: string[];
-    code: string[];
-    position: string;
-  };
-  type: number;
-};
-
-export default function Page() {
+export default function EditPerson({ defaultValues }: { defaultValues: any }) {
+  const newDefaultValues = { ...defaultValues };
   const form = useForm<FormInputs>({
-    defaultValues: {
-      discapacityNeedsHelp: false,
-      degrees: [{ type: "", name: "", date: "" }],
-      accreditations: [
-        {
-          evaluationType: "",
-          accreditationAgency: "",
-          accreditation: "",
-          startDate: "",
-          endDate: "",
-          date: "",
-        },
-      ],
-    },
+    defaultValues: newDefaultValues,
   });
   const civilState = useWatch({
     name: "civilState",
     control: form.control,
   });
-  const degrees = useFieldArray({
-    name: "degrees",
-    control: form.control,
-  });
-  const accreditations = useFieldArray({
-    name: "accreditations",
-    control: form.control,
-  });
-  const { toast } = useToast()
-  const router = useRouter() 
 
   const onSubmit: SubmitHandler<FormInputs> = async (
     data: FormInputs,
     e: any
   ) => {
     e.preventDefault();
-    const { academics, degrees, accreditations, professionalInfo, ...rest } = data;
+    console.log(data)
+    const { academics, degrees, accreditations, professionalInfo, ...rest } =
+      data;
     const formDataPerson = new FormData();
+    const formDataProfessional = new FormData()
     for (const key in rest) {
-      formDataPerson.append(key, rest[key]);
+      if (rest[key] !== undefined) formDataPerson.append(key, rest[key]);
+    }
+    for (const key in professionalInfo) {
+      if (rest[key] !== undefined) formDataProfessional.append(key, rest[key]);
     }
 
-    const createPerson = await http("/persons", { method: "POST", body: formDataPerson });
+    const [person, academic, professional] = await Promise.all([
+      http(`/persons/${newDefaultValues.id}`, {
+        method: "PATCH",
+        body: formDataPerson,
+      }),
+      http(`/persons/${newDefaultValues.id}/academics`, {
+        method: "PATCH",
+        body: JSON.stringify(academics),
+      }),
+      http(`/persons/${newDefaultValues.id}/professional`, {
+        method: "PATCH",
+        body: formDataProfessional,
+      }),
+    ]);
 
-    if (createPerson.status === 200) {
-      toast({ title: 'Éxito!', description: 'Persona agregada correctamente' })
-      router.push('/persons') 
-    } else {
-      toast({ title: 'Error!', description: 'No se pudo agregar la persona (datos inválidos o conflicto)' })
+    if (person.status === 200) {
+      toast({ title: 'Éxito!', description: 'Datos personales actualizados' })
+    }
+
+    if (academic.status === 200) {
+      toast({ title: 'Éxito!', description: 'Datos académicos actualizados' })
+    }
+
+    if (professional.status === 200) {
+      toast({ title: 'Éxito!', description: 'Datos profesionales actualizados' })
     }
   };
 
   return (
     <div className="pl-32 pr-32">
-      <h1 className="mb-10 text-3xl">Agregar persona</h1>
+      <h1 className="mb-10 text-3xl">Editar persona</h1>
       <Card>
         <CardContent>
           <PersonSection title="Datos personales" />
@@ -235,7 +178,7 @@ export default function Page() {
                       <FormControl>
                         <Select
                           onValueChange={field.onChange}
-                          defaultValue={field.value}
+                          defaultValue={field.value?.toString() ?? null}
                         >
                           <SelectTrigger className="w-[180px]">
                             <SelectValue />
@@ -259,7 +202,7 @@ export default function Page() {
                       <FormControl>
                         <Select
                           onValueChange={field.onChange}
-                          defaultValue={field.value}
+                          defaultValue={field.value?.toString() ?? null}
                         >
                           <SelectTrigger className="w-[180px]">
                             <SelectValue />
@@ -284,7 +227,7 @@ export default function Page() {
                       <FormLabel>Discapacidad necesita ayuda</FormLabel>
                       <FormControl>
                         <Switch
-                          checked={field.value}
+                          checked={field.value ?? false}
                           onCheckedChange={field.onChange}
                         />
                       </FormControl>
@@ -413,7 +356,7 @@ export default function Page() {
                       <FormControl>
                         <RadioGroup
                           onValueChange={field.onChange}
-                          defaultValue={field.value}
+                          defaultValue={field.value?.toString() ?? null}
                         >
                           <FormItem className="flex items-center space-x-3 space-y-0">
                             <FormControl>
@@ -484,7 +427,26 @@ export default function Page() {
                         Maxima categoría de estudios cursados
                       </FormLabel>
                       <FormControl>
-                        <Input {...field} />
+                        <Select
+                          onValueChange={field.onChange}
+                          defaultValue={field.value?.toString() ?? null}
+                        >
+                          <SelectTrigger>
+                            <SelectValue />
+                          </SelectTrigger>
+                          <SelectContent>
+                            {Object.entries(maximumStudiesCategories).map(
+                              ([key, value]) => (
+                                <SelectItem
+                                  key={`maximum-category-studies-${key}`}
+                                  value={key}
+                                >
+                                  {value}
+                                </SelectItem>
+                              )
+                            )}
+                          </SelectContent>
+                        </Select>
                       </FormControl>
                     </FormItem>
                   )}
@@ -508,7 +470,10 @@ export default function Page() {
                     <FormItem className="flex flex-col">
                       <FormLabel>Dedicación</FormLabel>
                       <FormControl>
-                        <Select onValueChange={field.onChange}>
+                        <Select
+                          onValueChange={field.onChange}
+                          defaultValue={field.value?.toString() ?? null}
+                        >
                           <SelectTrigger>
                             <SelectValue />
                           </SelectTrigger>
@@ -536,7 +501,10 @@ export default function Page() {
                     <FormItem className="flex flex-col">
                       <FormLabel>Titulación</FormLabel>
                       <FormControl>
-                        <Select onValueChange={field.onChange}>
+                        <Select
+                          onValueChange={field.onChange}
+                          defaultValue={field.value?.toString() ?? null}
+                        >
                           <SelectTrigger>
                             <SelectValue />
                           </SelectTrigger>
@@ -559,210 +527,6 @@ export default function Page() {
                 />
               </div>
 
-              {/* <div className="flex justify-between mb-4">
-                <h2 className="text-xl">Titulaciones</h2>
-                <Button
-                  type="button"
-                  variant="ghost"
-                  onClick={() =>
-                    degrees.append({
-                      type: "",
-                      date: "",
-                      name: "",
-                    })
-                  }
-                >
-                  <GrAdd />
-                </Button>
-              </div> */}
-              {/* {degrees.fields.map((field, index) => (
-                <div className="flex justify-between" key={field.id}>
-                  <div className="grid grid-flow-row grid-cols-3 gap-5 mb-3 w-full">
-                    <FormField
-                      control={form.control}
-                      name={`degrees.${index}.type`}
-                      render={({ field }) => (
-                        <FormItem className="flex flex-col">
-                          <FormLabel>Tipo</FormLabel>
-                          <FormControl>
-                            <Select onValueChange={field.onChange}>
-                              <SelectTrigger>
-                                <SelectValue />
-                              </SelectTrigger>
-                              <SelectContent>
-                                {Object.entries(degreeTypes).map(
-                                  ([key, value]) => (
-                                    <SelectItem
-                                      key={`degree-type-${key}`}
-                                      value={key}
-                                    >
-                                      {value}
-                                    </SelectItem>
-                                  )
-                                )}
-                              </SelectContent>
-                            </Select>
-                          </FormControl>
-                        </FormItem>
-                      )}
-                    />
-                    <FormField
-                      control={form.control}
-                      name={`degrees.${index}.name`}
-                      render={({ field }) => (
-                        <FormItem className="flex flex-col">
-                          <FormLabel>Nombre</FormLabel>
-                          <FormControl>
-                            <Input {...field} />
-                          </FormControl>
-                        </FormItem>
-                      )}
-                    />
-                    <FormField
-                      control={form.control}
-                      name={`degrees.${index}.date`}
-                      render={({ field }) => (
-                        <FormItem className="flex flex-col">
-                          <FormLabel>Fecha</FormLabel>
-                          <FormControl>
-                            <Input type="date" {...field} />
-                          </FormControl>
-                        </FormItem>
-                      )}
-                    />
-                  </div>
-                  <Button
-                    variant="ghost"
-                    type="button"
-                    onClick={() => degrees.remove(index)}
-                    className="self-center"
-                  >
-                    <MdDelete />
-                  </Button>
-                </div>
-              ))} */}
-              {/* <div className="flex justify-between mb-4">
-                <h2 className="text-xl">Acreditaciones</h2>
-                <Button
-                  type="button"
-                  variant="ghost"
-                  onClick={() =>
-                    accreditations.append({
-                      evaluationType: "",
-                      accreditation: "",
-                      accreditationAgency: "",
-                      date: "",
-                      endDate: "",
-                      startDate: "",
-                    })
-                  }
-                >
-                  <GrAdd />
-                </Button>
-              </div>
-
-              {accreditations.fields.map((field, index) => (
-                <div className="flex justify-between mb-10" key={field.id}>
-                  <div className="grid grid-flow-row grid-cols-3 gap-5 w-full">
-                    <FormField
-                      control={form.control}
-                      name={`accreditations.${index}.evaluationType`}
-                      render={({ field }) => (
-                        <FormItem className="flex flex-col">
-                          <FormLabel>Evaluación profesorado</FormLabel>
-                          <FormControl>
-                            <Select onValueChange={field.onChange}>
-                              <SelectTrigger>
-                                <SelectValue />
-                              </SelectTrigger>
-                              <SelectContent>
-                                {Object.entries(evaluationTypes).map(
-                                  ([key, value]) => (
-                                    <SelectItem
-                                      key={`evaluation-type-${key}`}
-                                      value={key}
-                                    >
-                                      {value}
-                                    </SelectItem>
-                                  )
-                                )}
-                              </SelectContent>
-                            </Select>
-                          </FormControl>
-                        </FormItem>
-                      )}
-                    />
-                    <FormField
-                      control={form.control}
-                      name={`accreditations.${index}.accreditationAgency`}
-                      render={({ field }) => (
-                        <FormItem className="flex flex-col">
-                          <FormLabel>Agencia acreditante</FormLabel>
-                          <FormControl>
-                            <Input {...field} />
-                          </FormControl>
-                        </FormItem>
-                      )}
-                    />
-                    <FormField
-                      control={form.control}
-                      name={`accreditations.${index}.accreditation`}
-                      render={({ field }) => (
-                        <FormItem className="flex flex-col">
-                          <FormLabel>Acreditación o reconocimiento</FormLabel>
-                          <FormControl>
-                            <Input {...field} />
-                          </FormControl>
-                        </FormItem>
-                      )}
-                    />
-                    <FormField
-                      control={form.control}
-                      name={`accreditations.${index}.startDate`}
-                      render={({ field }) => (
-                        <FormItem className="flex flex-col">
-                          <FormLabel>Año inicio</FormLabel>
-                          <FormControl>
-                            <Input type="date" {...field} />
-                          </FormControl>
-                        </FormItem>
-                      )}
-                    />
-                    <FormField
-                      control={form.control}
-                      name={`accreditations.${index}.endDate`}
-                      render={({ field }) => (
-                        <FormItem className="flex flex-col">
-                          <FormLabel>Año fin</FormLabel>
-                          <FormControl>
-                            <Input type="date" {...field} />
-                          </FormControl>
-                        </FormItem>
-                      )}
-                    />
-                    <FormField
-                      control={form.control}
-                      name={`accreditations.${index}.date`}
-                      render={({ field }) => (
-                        <FormItem className="flex flex-col">
-                          <FormLabel>Concedido el</FormLabel>
-                          <FormControl>
-                            <Input type="date" {...field} />
-                          </FormControl>
-                        </FormItem>
-                      )}
-                    />
-                  </div>
-                  <Button
-                    variant="ghost"
-                    type="button"
-                    onClick={() => accreditations.remove(index)}
-                    className="self-center"
-                  >
-                    <MdDelete />
-                  </Button>
-                </div>
-              ))} */}
               <PersonSection title="Datos profesionales" />
               <div className="grid grid-flow-row grid-cols-3 gap-5">
                 <FormField
@@ -772,7 +536,10 @@ export default function Page() {
                     <FormItem className="flex flex-col">
                       <FormLabel>Tipo</FormLabel>
                       <FormControl>
-                        <Select onValueChange={field.onChange}>
+                        <Select
+                          onValueChange={field.onChange}
+                          defaultValue={field.value?.toString() ?? null}
+                        >
                           <SelectTrigger>
                             <SelectValue />
                           </SelectTrigger>
@@ -800,7 +567,10 @@ export default function Page() {
                     <FormItem className="flex flex-col">
                       <FormLabel>Departamento</FormLabel>
                       <FormControl>
-                        <Select onValueChange={field.onChange}>
+                        <Select
+                          onValueChange={field.onChange}
+                          defaultValue={field.value?.toString() ?? null}
+                        >
                           <SelectTrigger>
                             <SelectValue />
                           </SelectTrigger>
@@ -828,7 +598,10 @@ export default function Page() {
                     <FormItem className="flex flex-col">
                       <FormLabel>Facultad</FormLabel>
                       <FormControl>
-                        <Select onValueChange={field.onChange}>
+                        <Select
+                          onValueChange={field.onChange}
+                          defaultValue={field.value?.toString() ?? null}
+                        >
                           <SelectTrigger>
                             <SelectValue />
                           </SelectTrigger>
@@ -850,7 +623,7 @@ export default function Page() {
                   )}
                 />
               </div>
-              <Button>Crear</Button>
+              <Button>Actualizar</Button>
             </form>
           </Form>
         </CardContent>

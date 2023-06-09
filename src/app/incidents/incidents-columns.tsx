@@ -20,8 +20,8 @@ export type Incident = {
   description: string;
   severity: number;
   notes: string;
-  startDate: Date;
-  endDate: Date;
+  startDate: string;
+  endDate: string;
   startHour: string;
   endHour: string;
 };

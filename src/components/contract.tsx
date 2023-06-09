@@ -16,6 +16,11 @@ type AnualRetribution = {
   concept: string;
 };
 
+export type TrialPeriod = {
+  start: string
+  end: string
+}
+
 export type LaboralContract = {
   entity: string;
   modality: string;
@@ -27,7 +32,7 @@ export type LaboralContract = {
   hours: number;
   startDate: string;
   endDate: string;
-  trialPeriod: Date | string[] | { start: string; end: string };
+  trialPeriod: Date | string[] | TrialPeriod;
   collectiveAgreement: keyof typeof agreements;
   anualRetribution: AnualRetribution;
   undefinedEndDate: boolean;

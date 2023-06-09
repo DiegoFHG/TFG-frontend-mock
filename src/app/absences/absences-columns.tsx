@@ -1,6 +1,6 @@
 "use client";
 
-import { PermitCasualtyPerson } from "../incidents/page";
+import PermitCasualtyPerson from "../incidents/page";
 
 import { ColumnDef } from "@tanstack/react-table";
 import { GrView } from "react-icons/gr";
@@ -11,14 +11,14 @@ import Link from "next/link";
 
 export type Absence = {
   id: string
-  person: PermitCasualtyPerson;
+  person: string;
   type: string;
   name: string;
   description: string;
   severity: number;
   notes: string;
-  startDate: Date;
-  endDate: Date;
+  startDate: string;
+  endDate: string;
   startHour: string;
   endHour: string;
 };

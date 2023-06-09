@@ -1,5 +1,3 @@
-'use client'
-
 import {
   Accreditation,
   Ascendant,
@@ -7,6 +5,7 @@ import {
   Descendant,
   Person,
 } from "@/app/person-columns";
+import { Button } from "@/components/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/card";
 import { Checkbox } from "@/components/checkbox";
 import { Contract } from "@/components/contract";
@@ -15,7 +14,8 @@ import PersonSection from "@/components/person-section";
 import SectionContent from "@/components/section-content";
 import TextLabel from "@/components/text-label";
 import http from "@/lib/http";
-import { useRouter } from "next/navigation";
+import Link from "next/link";
+import { GrAdd } from "react-icons/gr";
 
 type BankAccount = {
   id: string;
@@ -148,17 +148,13 @@ export default async function Page({
 }: {
   params: { id: string };
 }) {
-  const router = useRouter()
-  const [person, bankAccounts, emergencyContacts, contracts] = await Promise.all([
-    getPerson(id),
-    getPersonBankAccounts(id),
-    getPersonEmergencyContacts(id),
-    getPersonContracts(id)
-  ]);
-
-  function goToCreateContract() {
-    router.push(`/persons/${id}/contracts/create`)
-  }
+  const [person, bankAccounts, emergencyContacts, contracts] =
+    await Promise.all([
+      getPerson(id),
+      getPersonBankAccounts(id),
+      getPersonEmergencyContacts(id),
+      getPersonContracts(id),
+    ]);
 
   const ascendantsList = person.ascendents?.map((ascendant: Ascendant) => (
     <div key={`ascendant-${ascendant.id}`} className="mb-3">
@@ -286,7 +282,9 @@ export default async function Page({
     )
   );
 
-  const contractsList = contracts.data.map((contract: Contract) => <Contract key={`contract-${contract.id}`} data={contract} />)
+  const contractsList = contracts.data.map((contract: Contract) => (
+    <Contract key={`contract-${contract.id}`} data={contract} />
+  ));
 
   return (
     <div className="pl-32 pr-32">
@@ -397,13 +395,27 @@ export default async function Page({
 
           <PersonSection title="Familiares" />
           <div className="mb-3">
-            <h3 className="text-lg mb-2">Ascendientes</h3>
+            <div className="flex justify-between">
+              <h3 className="text-lg mb-2">Ascendientes</h3>
+              <Link href={`/persons/${id}/family/add?type=ascendants`}>
+                <Button variant="ghost">
+                  <GrAdd />
+                </Button>
+              </Link>
+            </div>
             {ascendantsList?.length > 0 ? (
               <div>{ascendantsList}</div>
             ) : (
               <span>Esta persona no tiene ascendientes.</span>
             )}
-            <h3 className="text-lg mb-2">Descendientes</h3>
+            <div className="flex justify-between">
+              <h3 className="text-lg mb-2">Descendientes</h3>
+              <Link href={`/persons/${id}/family/add?type=descendants`}>
+                <Button variant="ghost">
+                  <GrAdd />
+                </Button>
+              </Link>
+            </div>
             {descendantsList?.length > 0 ? (
               <div>{descendantsList}</div>
             ) : (
@@ -411,7 +423,10 @@ export default async function Page({
             )}
           </div>
 
-          <PersonSection title="Datos bancarios" />
+          <PersonSection
+            title="Datos bancarios"
+            onActionClick={`/persons/${id}/bank-data/add`}
+          />
           <div className="mb-3">
             {bankAccountsList?.length > 0 ? (
               <div>{bankAccountsList}</div>
@@ -420,12 +435,27 @@ export default async function Page({
             )}
           </div>
 
-          <PersonSection title="Contactos de emergencia" />
+          <PersonSection
+            title="Contactos de emergencia"
+            onActionClick={`/persons/${id}/emergency-contact/add`}
+          />
           <div className="mb-3">
             {emergencyContactsList?.length > 0 ? (
               <div>{emergencyContactsList}</div>
             ) : (
               <span>Esta persona no tiene contactos de emergencia.</span>
+            )}
+          </div>
+
+          <PersonSection
+            title="Direcciones"
+            onActionClick={`/persons/${id}/contact-address/add`}
+          />
+          <div className="mb-3">
+            {[]?.length > 0 ? (
+              <div>{[]}</div>
+            ) : (
+              <span>Esta persona no tiene direcciones asociadas.</span>
             )}
           </div>
 
@@ -451,13 +481,27 @@ export default async function Page({
               text={titulationOptions[person.academics?.titulation]}
             />
           </SectionContent>
-          <h3 className="text-lg mb-2">Titulaciones</h3>
+          <div className="flex justify-between">
+            <h3 className="text-lg mb-2">Titulaciones</h3>
+            <Link href={`/persons/${id}/titulations/add?`}>
+              <Button variant="ghost">
+                <GrAdd />
+              </Button>
+            </Link>
+          </div>
           {degreesList?.length > 0 ? (
             <div>{degreesList}</div>
           ) : (
             <span>Esta persona no tiene titulaciones.</span>
           )}
-          <h3 className="text-lg mb-2">Acreditaciones</h3>
+          <div className="flex justify-between">
+            <h3 className="text-lg mb-2">Acreditaciones</h3>
+            <Link href={`/persons/${id}/accreditations/add?`}>
+              <Button variant="ghost">
+                <GrAdd />
+              </Button>
+            </Link>
+          </div>
           {accreditationsList?.length > 0 ? (
             <div>{accreditationsList}</div>
           ) : (
@@ -485,7 +529,10 @@ export default async function Page({
             <TextLabel label="Cargo" text={person.professional?.position} />
           </SectionContent>
 
-          <PersonSection title="Relación jurídica" onActionClick={goToCreateContract} />
+          <PersonSection
+            title="Relación jurídica"
+            onActionClick={`/persons/${id}/contracts/create`}
+          />
           {contractsList.length > 0 ? (
             contractsList
           ) : (

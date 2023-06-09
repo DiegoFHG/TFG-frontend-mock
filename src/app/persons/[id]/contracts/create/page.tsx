@@ -15,6 +15,7 @@ import {
   InternshipContract,
   levels,
   StayContract,
+  TrialPeriod,
 } from "@/components/contract";
 import {
   Form,
@@ -56,15 +57,19 @@ export default function Page({ params: { id } }: { params: { id: string } }) {
   const [selectedContractType, setSelectedContractType] = useState<
     string | null
   >(null);
-  const laboralContractForm = useForm<LaboralContract>();
+  const laboralContractForm = useForm<LaboralContract>({
+    defaultValues: {
+      undefinedEndDate: false
+    }
+  });
   const commercialContractForm = useForm<CommercialContract>();
   const adHonoremContractFrom = useForm<AdHonoremContract>();
   const colaborationInternshipContractForm = useForm<InternshipContract>();
   const phdInternshipContractForm = useForm<InternshipContract>();
   const stayContractForm = useForm<StayContract>();
   const investigationContractForm = useForm<StayContract>();
-  const router = useRouter()
-  const { toast } = useToast()
+  const router = useRouter();
+  const { toast } = useToast();
 
   const onSubmit: SubmitHandler<
     | StayContract
@@ -83,6 +88,15 @@ export default function Page({ params: { id } }: { params: { id: string } }) {
   ) => {
     e.preventDefault();
     if (selectedContractType !== null) {
+      if (selectedContractType) {
+        const newData = data as LaboralContract;
+
+        newData.trialPeriod = [
+          (newData.trialPeriod as TrialPeriod).start,
+          (newData.trialPeriod as TrialPeriod).end,
+        ];
+      }
+
       const formDataContract = new FormData();
       formDataContract.append("person", id);
       formDataContract.append("contractType", selectedContractType);
@@ -94,11 +108,15 @@ export default function Page({ params: { id } }: { params: { id: string } }) {
       });
 
       if (createContract.status === 200) {
-        router.push(`/persons/${id}`)
+        router.push(`/persons/${id}`);
       }
-      
+
       if (createContract.status === 400) {
-        toast({ title: 'Error!', description: 'Los datos no están en el formato requerido o hay datos faltantes' });
+        toast({
+          title: "Error!",
+          description:
+            "Los datos no están en el formato requerido o hay datos faltantes",
+        });
       }
     }
   };
@@ -368,6 +386,31 @@ export default function Page({ params: { id } }: { params: { id: string } }) {
                   <FormItem>
                     <FormLabel>Retribución (€)</FormLabel>
                     <Input {...field} />
+                  </FormItem>
+                )}
+              />
+              <FormField
+                control={form.control}
+                name="hours"
+                render={({ field }) => (
+                  <FormItem>
+                    <FormLabel>Horas</FormLabel>
+                    <Input {...field} />
+                  </FormItem>
+                )}
+              />
+              <FormField
+                control={form.control}
+                name="undefinedEndDate"
+                render={({ field }) => (
+                  <FormItem className="flex flex-col">
+                    <FormLabel>Contrato indefinido</FormLabel>
+                    <FormControl>
+                      <Switch
+                        checked={field.value}
+                        onCheckedChange={field.onChange}
+                      />
+                    </FormControl>
                   </FormItem>
                 )}
               />
