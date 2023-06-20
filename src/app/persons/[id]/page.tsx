@@ -1,6 +1,7 @@
 import {
   Accreditation,
   Ascendant,
+  ContactAddress,
   Degree,
   Descendant,
   Person,
@@ -36,6 +37,12 @@ const emergencyContactRelationships = {
   1: "Padre/Madre",
   2: "Hermano/a",
   3: "Otros",
+};
+
+export const addressTypes = {
+  0: "Física",
+  1: "Postal",
+  2: "Judicial",
 };
 
 export const maximumStudiesCategories = {
@@ -143,17 +150,26 @@ async function getPersonContracts(personId: string) {
   return data;
 }
 
+async function getPersonAddresses(personId: string) {
+  const data = await (
+    await http(`/persons/${personId}/addresses`, { cache: "no-store" })
+  ).json();
+
+  return data;
+}
+
 export default async function Page({
   params: { id },
 }: {
   params: { id: string };
 }) {
-  const [person, bankAccounts, emergencyContacts, contracts] =
+  const [person, bankAccounts, emergencyContacts, contracts, addresses] =
     await Promise.all([
       getPerson(id),
       getPersonBankAccounts(id),
       getPersonEmergencyContacts(id),
       getPersonContracts(id),
+      getPersonAddresses(id),
     ]);
 
   const ascendantsList = person.ascendents?.map((ascendant: Ascendant) => (
@@ -265,8 +281,8 @@ export default async function Page({
             text={evaluationTypes[accreditation.evaluationType]}
           />
           <TextLabel
-            label="Fecha de acreditación"
-            text={new Date(accreditation.date).toLocaleDateString()}
+            label="Otorgado el"
+            text={accreditation.date}
           />
           <TextLabel
             label="Fecha inicio"
@@ -284,6 +300,30 @@ export default async function Page({
 
   const contractsList = contracts.data.map((contract: Contract) => (
     <Contract key={`contract-${contract.id}`} data={contract} />
+  ));
+
+  const addressList = addresses.data.map((address: ContactAddress) => (
+    <div key={`address-${address.id}`} className="mb-3">
+      <div className="grid grid-flow-row grid-cols-3">
+        <TextLabel label="Dirección" text={address.line} />
+        <TextLabel label="Código postal" text={address.postalCode} />
+        <TextLabel label="Población" text={address.city} />
+        <TextLabel label="País" text={address.country} />
+        <TextLabel label="Provincia" text={address.division} />
+        <TextLabel label="Tipo" text={addressTypes[address.type]} />
+        <div className="flex flex-col mb-3">
+          <Label htmlFor={`active-address-${address.id}`} className="font-bold">
+            Activa
+          </Label>
+          <Checkbox
+            checked={person.principalAddress === address.id}
+            id={`active-address-${address.id}`}
+            className="mr-3"
+          />
+        </div>
+      </div>
+      <hr />
+    </div>
   ));
 
   return (
@@ -452,8 +492,8 @@ export default async function Page({
             onActionClick={`/persons/${id}/contact-address/add`}
           />
           <div className="mb-3">
-            {[]?.length > 0 ? (
-              <div>{[]}</div>
+            {addressList?.length > 0 ? (
+              <div>{addressList}</div>
             ) : (
               <span>Esta persona no tiene direcciones asociadas.</span>
             )}

@@ -15,7 +15,7 @@ export type PermitCasualtyPerson = {
 
 export type Incident = {
   id: string;
-  person: PermitCasualtyPerson;
+  person: string;
   type: string;
   description: string;
   severity: number;

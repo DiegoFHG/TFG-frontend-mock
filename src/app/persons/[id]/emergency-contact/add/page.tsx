@@ -28,6 +28,7 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/select";
+import http from "@/lib/http";
 
 const relationships = {
   0: "Pareja",
@@ -47,26 +48,29 @@ export default function Page({ params: { id } }: { params: { id: string } }) {
     e: any
   ) => {
     e.preventDefault();
+    const emergencyContact = { person: id, ...data };
 
-    // const formDataFamily = new FormData()
-    // formDataFamily.append('person', id)
-    // formDataFamily.append('contract', JSON.stringify(data))
+    const createAccreditation = await http("/emergency-contacts", {
+      method: "POST",
+      headers: {
+        "Content-Type": "application/json",
+      },
+      body: JSON.stringify(emergencyContact),
+    });
 
-    // LOGIC FOR SEND TO THE API......
-    toast({ title: "Form Send!", description: "Datos enviados correctamente" });
-    // LOGIC FOR SEND TO THE API......
-
-    // const createContract = await http('/contracts', {
-    //   method: 'POST',
-    //   body: formDataFamily
-    // })
-
-    // if (createContract.status === 200) {
-    //   router.push(`/persons/${id}`)
-    // }
-    // if (createContract.status === 400) {
-    //   toast({ title: 'Error!', description: 'Los datos no están en el formato requerido o hay datos faltantes' })
-    // }
+    if (createAccreditation.status === 200) {
+      toast({
+        title: "Éxito!",
+        description: "Contacto de emergencia agregada correctamente",
+      });
+      router.push(`/persons/${id}`);
+    } else {
+      toast({
+        title: "Error!",
+        description:
+          "No se pudo agregar el contacto de emergencia (datos inválidos o conflicto)",
+      });
+    }
   };
 
   function previousPage() {
@@ -99,6 +103,19 @@ export default function Page({ params: { id } }: { params: { id: string } }) {
 
                 <FormField
                   control={form.control}
+                  name="address"
+                  render={({ field }) => (
+                    <FormItem className="flex flex-col">
+                      <FormLabel>Dirección</FormLabel>
+                      <FormControl>
+                        <Input {...field} />
+                      </FormControl>
+                    </FormItem>
+                  )}
+                />
+
+                <FormField
+                  control={form.control}
                   name="phoneNumber"
                   render={({ field }) => (
                     <FormItem className="flex flex-col">
@@ -112,7 +129,7 @@ export default function Page({ params: { id } }: { params: { id: string } }) {
 
                 <FormField
                   control={form.control}
-                  name="relationshipInput"
+                  name="relationship"
                   render={({ field }) => (
                     <FormItem className="flex flex-col">
                       <FormLabel>Relación</FormLabel>
@@ -122,14 +139,16 @@ export default function Page({ params: { id } }: { params: { id: string } }) {
                             <SelectValue />
                           </SelectTrigger>
                           <SelectContent>
-                            {Object.entries(relationships).map(([key, value]) => (
-                              <SelectItem
-                                key={`relationships-${key}`}
-                                value={key}
-                              >
-                                {value}
-                              </SelectItem>
-                            ))}
+                            {Object.entries(relationships).map(
+                              ([key, value]) => (
+                                <SelectItem
+                                  key={`relationships-${key}`}
+                                  value={key}
+                                >
+                                  {value}
+                                </SelectItem>
+                              )
+                            )}
                           </SelectContent>
                         </Select>
                       </FormControl>

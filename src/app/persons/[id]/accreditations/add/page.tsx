@@ -1,7 +1,7 @@
 "use client";
 
 import { Card, CardContent } from "@/components/card";
-import { useForm } from "react-hook-form";
+import { SubmitHandler, useForm } from "react-hook-form";
 import { evaluationTypes } from "../../page";
 import {
   Form,
@@ -19,6 +19,9 @@ import {
 } from "@/components/select";
 import { Input } from "@/components/input";
 import { Button } from "@/components/button";
+import http from "@/lib/http";
+import { useToast } from "@/components/use-toast";
+import { useRouter } from "next/navigation";
 
 type Accreditation = {
   evaluationType: keyof typeof evaluationTypes;
@@ -34,8 +37,28 @@ const evaluation = {
   1: "Evaluación de los tramos de investigación",
 };
 
-export default function Page() {
+export default function Page({ params: { id } }: { params: { id: string } }) {
   const form = useForm<Accreditation>();
+  const { toast } = useToast()
+  const router = useRouter()
+
+  const onSubmit: SubmitHandler<Accreditation> = async (data: Accreditation, e: any) => {
+    e.preventDefault()
+    const accreditation = { person: id, ...data }
+    const formData = new FormData();
+    for (const key in accreditation) {
+      formData.append(key, accreditation[key])
+    }
+
+    const createAccreditation = await http("/accreditations", { method: 'POST', body: formData })
+    
+    if (createAccreditation.status === 200) {
+      toast({ title: 'Éxito!', description: 'Acreditación agregada correctamente' })
+      router.push(`/persons/${id}`) 
+    } else {
+      toast({ title: 'Error!', description: 'No se pudo agregar la acreditación (datos inválidos o conflicto)' })
+    }
+  }
 
   return (
     <div className="pl-32 pr-32">
@@ -43,7 +66,7 @@ export default function Page() {
       <Card>
         <CardContent className="p-5">
           <Form {...form}>
-            <form>
+            <form onSubmit={form.handleSubmit(onSubmit)}>
               <div className="grid grid-flow-row grid-cols-3 gap-5">
                 <FormField
                   control={form.control}
@@ -103,9 +126,9 @@ export default function Page() {
                   name="startDate"
                   render={({ field }) => (
                     <FormItem className="flex flex-col">
-                      <FormLabel>Año inicio</FormLabel>
+                      <FormLabel>Fecha inicio</FormLabel>
                       <FormControl>
-                        <Input {...field} />
+                        <Input type="date" {...field} />
                       </FormControl>
                     </FormItem>
                   )}
@@ -116,9 +139,9 @@ export default function Page() {
                   name="endDate"
                   render={({ field }) => (
                     <FormItem className="flex flex-col">
-                      <FormLabel>Año fin</FormLabel>
+                      <FormLabel>Fecha fin</FormLabel>
                       <FormControl>
-                        <Input {...field} />
+                        <Input type="date" {...field} />
                       </FormControl>
                     </FormItem>
                   )}
@@ -131,7 +154,7 @@ export default function Page() {
                     <FormItem className="flex flex-col">
                       <FormLabel>Otorgado el</FormLabel>
                       <FormControl>
-                        <Input {...field} type="date" />
+                        <Input {...field} />
                       </FormControl>
                     </FormItem>
                   )}

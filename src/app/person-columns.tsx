@@ -7,6 +7,7 @@ import { ColumnDef } from "@tanstack/react-table";
 import { Button } from "@/components/button";
 import Link from "next/link";
 import {
+  addressTypes,
   dedicationOptions,
   degreeTypes,
   evaluationTypes,
@@ -33,7 +34,7 @@ import http from "@/lib/http";
 export type Ascendant = {
   id: string;
   name: string;
-  dateOfBirth: Date;
+  dateOfBirth: string;
   discapacity: number;
   discapacityNeedsHelp: boolean;
   uniqueConvivence: boolean;
@@ -42,7 +43,7 @@ export type Ascendant = {
 export type Descendant = {
   id: string;
   name: string;
-  dateOfBirth: Date;
+  dateOfBirth: string;
   discapacity: number;
   discapacityNeedsHelp: boolean;
   uniqueConvivence: boolean;
@@ -57,22 +58,22 @@ export type Degree = {
 };
 
 export type ContactAddress = {
-  address: string
+  id: string
+  name: string
+  line: string
   postalCode: string
   city: string
   country: string
   division: string
-  phoneNumber: string
-  mobilePhoneNumber: string
-  personalEmail: string
-  institutionalEmail: string
   primary: boolean
+  type: keyof typeof addressTypes
 }
 
 export type EmergencyContact = {
   name: string
+  address: string
   phoneNumber: string
-  relationshipInput: string
+  relationship: string
 }
 
 export type BankData = {
@@ -88,7 +89,7 @@ export type Accreditation = {
   accreditation: string;
   startDate: Date;
   endDate: Date;
-  date: Date;
+  date: string;
 };
 
 export type Academics = {
@@ -133,6 +134,8 @@ export type Person = {
   institutionalEmail: string;
   civilState: number;
   type: number;
+  principalAddress: string
+  principalBankAccount: string
   academics: Academics;
   ascendents: Ascendant[];
   descendents: Descendant[];

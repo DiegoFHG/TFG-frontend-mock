@@ -29,6 +29,7 @@ import {
   dedicationOptions,
   degreeTypes,
   evaluationTypes,
+  maximumStudiesCategories,
   professionalDepartments,
   professionalFaculties,
   professionalTypes,
@@ -40,7 +41,8 @@ import { Button } from "@/components/button";
 import { GrAdd } from "react-icons/gr";
 import http from "@/lib/http";
 import { useToast } from "@/components/use-toast";
-import { useRouter } from 'next/navigation'
+import { useRouter } from "next/navigation";
+import { ProfessionalInfo } from "@/app/person-columns";
 
 export type FormInputs = {
   name: string;
@@ -121,27 +123,79 @@ export default function Page() {
     name: "accreditations",
     control: form.control,
   });
-  const { toast } = useToast()
-  const router = useRouter() 
+  const { toast } = useToast();
+  const router = useRouter();
 
   const onSubmit: SubmitHandler<FormInputs> = async (
     data: FormInputs,
     e: any
   ) => {
     e.preventDefault();
-    const { academics, degrees, accreditations, professionalInfo, ...rest } = data;
+    const { academics, degrees, accreditations, professionalInfo, ...rest } =
+      data;
     const formDataPerson = new FormData();
     for (const key in rest) {
       formDataPerson.append(key, rest[key]);
     }
 
-    const createPerson = await http("/persons", { method: "POST", body: formDataPerson });
+    const createPerson = await http("/persons", {
+      method: "POST",
+      body: formDataPerson,
+    });
 
     if (createPerson.status === 200) {
-      toast({ title: 'Éxito!', description: 'Persona agregada correctamente' })
-      router.push('/persons') 
+      const person = await createPerson.json();
+      toast({ title: "Éxito!", description: "Persona agregada correctamente" });
+
+      const [professionalData, academicData] = await Promise.all([
+        http(`/persons/${person.id}/professional`, {
+          method: "PATCH",
+          headers: {
+            "Content-Type": "application/json",
+          },
+          body: JSON.stringify(professionalInfo),
+        }),
+        http(`/persons/${person.id}/academics`, {
+          method: "PATCH",
+          headers: {
+            "Content-Type": "application/json",
+          },
+          body: JSON.stringify(academics),
+        }),
+      ]);
+
+      if (professionalData.status === 200) {
+        toast({
+          title: "Éxito!",
+          description: "Datos profesionales agregados correctamente",
+        });
+      } else {
+        toast({
+          title: "Error!",
+          description:
+            "No se pudo agregar los datos profesionales a la persona",
+        });
+      }
+
+      if (academicData.status === 200) {
+        toast({
+          title: "Éxito!",
+          description: "Datos académicos agregados correctamente",
+        });
+      } else {
+        toast({
+          title: "Error!",
+          description: "No se pudo agregar los datos académicos a la persona",
+        });
+      }
+
+      router.push("/");
     } else {
-      toast({ title: 'Error!', description: 'No se pudo agregar la persona (datos inválidos o conflicto)' })
+      toast({
+        title: "Error!",
+        description:
+          "No se pudo agregar la persona (datos inválidos o conflicto)",
+      });
     }
   };
 
@@ -479,12 +533,28 @@ export default function Page() {
                   control={form.control}
                   name="academics.maximumStudies"
                   render={({ field }) => (
-                    <FormItem>
+                    <FormItem className="flex flex-col">
                       <FormLabel>
-                        Maxima categoría de estudios cursados
+                        Maxima categoría de estudios finalizados
                       </FormLabel>
                       <FormControl>
-                        <Input {...field} />
+                        <Select onValueChange={field.onChange}>
+                          <SelectTrigger>
+                            <SelectValue />
+                          </SelectTrigger>
+                          <SelectContent>
+                            {Object.entries(maximumStudiesCategories).map(
+                              ([key, value]) => (
+                                <SelectItem
+                                  key={`maximum-category-${key}`}
+                                  value={key}
+                                >
+                                  {value}
+                                </SelectItem>
+                              )
+                            )}
+                          </SelectContent>
+                        </Select>
                       </FormControl>
                     </FormItem>
                   )}

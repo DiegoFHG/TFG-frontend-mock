@@ -2,20 +2,6 @@
 
 import { Card, CardContent } from "@/components/card";
 import {
-  CommercialContract,
-  LaboralContract,
-  AdHonoremContract,
-  agreements,
-  categories,
-  commercialContractModalities,
-  locations,
-  modalities,
-  schedules,
-  InternshipContract,
-  // levels,
-  StayContract,
-} from "@/components/contract";
-import {
   Form,
   FormControl,
   FormField,
@@ -23,8 +9,6 @@ import {
   FormLabel,
 } from "@/components/form";
 import { Input } from "@/components/input";
-// import {}
-import { Label } from "@/components/label";
 import { Checkbox } from "@/components/checkbox";
 import {
   SelectContent,
@@ -33,11 +17,8 @@ import {
   SelectValue,
 } from "@/components/select";
 import { Select } from "@radix-ui/react-select";
-import React, { useState } from "react";
 import { SubmitHandler, useForm } from "react-hook-form";
-import { dedicationOptions } from "../../page";
 import { Button } from "@/components/button";
-// import { Switch } from '@/components/switch'
 import http from "@/lib/http";
 import { useRouter, useSearchParams } from "next/navigation";
 import { useToast } from "@/components/use-toast";
@@ -55,8 +36,17 @@ const discapacity = {
 };
 
 export default function Page({ params: { id } }: { params: { id: string } }) {
-  const ascendantForm = useForm<Ascendant>();
-  const descendantForm = useForm<Descendant>();
+  const ascendantForm = useForm<Ascendant>({
+    defaultValues: {
+      uniqueConvivence: false,
+    },
+  });
+  const descendantForm = useForm<Descendant>({
+    defaultValues: {
+      uniqueConvivence: false,
+      adopted: false,
+    },
+  });
 
   const router = useRouter();
   const { toast } = useToast();
@@ -68,27 +58,46 @@ export default function Page({ params: { id } }: { params: { id: string } }) {
     data: Ascendant | Descendant,
     e: any
   ) => {
+    let familyMember: Response | null = null;
+
     e.preventDefault();
 
-    // const formDataFamily = new FormData()
-    // formDataFamily.append('person', id)
-    // formDataFamily.append('contract', JSON.stringify(data))
+    if (String(typeForm) === "ascendants") {
+      data as Ascendant;
 
-    // LOGIC FOR SEND TO THE API......
-    toast({ title: "Form Send!", description: "Datos enviados correctamente" });
-    // LOGIC FOR SEND TO THE API......
+      familyMember = await http(`/persons/${id}/ascendents`, {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify(data),
+      });
+    }
 
-    // const createContract = await http('/contracts', {
-    //   method: 'POST',
-    //   body: formDataFamily
-    // })
+    if (String(typeForm) === "descendants") {
+      data as Descendant;
 
-    // if (createContract.status === 200) {
-    //   router.push(`/persons/${id}`)
-    // }
-    // if (createContract.status === 400) {
-    //   toast({ title: 'Error!', description: 'Los datos no están en el formato requerido o hay datos faltantes' })
-    // }
+      familyMember = await http(`/persons/${id}/descendents`, {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify(data),
+      });
+    }
+
+    if (familyMember !== null && familyMember.status === 200) {
+      toast({
+        title: "Éxito!",
+        description: "Familiar agregado correctamente",
+      });
+      router.push(`/persons/${id}`);
+    } else {
+      toast({
+        title: "Error!",
+        description: "No se pudo agregar el familiar",
+      });
+    }
   };
 
   function previousPage() {
@@ -144,10 +153,7 @@ export default function Page({ params: { id } }: { params: { id: string } }) {
                         </SelectTrigger>
                         <SelectContent>
                           {Object.entries(discapacity).map(([key, value]) => (
-                            <SelectItem
-                              key={`minusvality-${key}`}
-                              value={key}
-                            >
+                            <SelectItem key={`minusvality-${key}`} value={key}>
                               {value}
                             </SelectItem>
                           ))}
@@ -169,6 +175,8 @@ export default function Page({ params: { id } }: { params: { id: string } }) {
                     </FormLabel>
                     <FormControl>
                       <Checkbox
+                        checked={field.value}
+                        onCheckedChange={field.onChange}
                         className="mr-3"
                         id="civil-state-0"
                       />
@@ -179,12 +187,14 @@ export default function Page({ params: { id } }: { params: { id: string } }) {
 
               <FormField
                 control={form.control}
-                name="discapacityNeedsHelp"
+                name="uniqueConvivence"
                 render={({ field }) => (
                   <FormItem className="flex flex-col">
                     <FormLabel>Convivencia única</FormLabel>
                     <FormControl>
                       <Checkbox
+                        checked={field.value}
+                        onCheckedChange={field.onChange}
                         className="mr-3"
                         id="civil-state-0"
                       />
@@ -275,7 +285,22 @@ export default function Page({ params: { id } }: { params: { id: string } }) {
                       personas o movilidad reducida
                     </FormLabel>
                     <FormControl>
+                      <Checkbox className="mr-3" id="civil-state-0" />
+                    </FormControl>
+                  </FormItem>
+                )}
+              />
+
+              <FormField
+                control={form.control}
+                name="uniqueConvivence"
+                render={({ field }) => (
+                  <FormItem className="flex flex-col">
+                    <FormLabel>Convivencia única</FormLabel>
+                    <FormControl>
                       <Checkbox
+                        checked={field.value}
+                        onCheckedChange={field.onChange}
                         className="mr-3"
                         id="civil-state-0"
                       />
@@ -286,12 +311,14 @@ export default function Page({ params: { id } }: { params: { id: string } }) {
 
               <FormField
                 control={form.control}
-                name="discapacityNeedsHelp"
+                name="adopted"
                 render={({ field }) => (
                   <FormItem className="flex flex-col">
-                    <FormLabel>Convivencia única</FormLabel>
+                    <FormLabel>Adoptado</FormLabel>
                     <FormControl>
                       <Checkbox
+                        checked={field.value}
+                        onCheckedChange={field.onChange}
                         className="mr-3"
                         id="civil-state-0"
                       />
@@ -299,23 +326,7 @@ export default function Page({ params: { id } }: { params: { id: string } }) {
                   </FormItem>
                 )}
               />
-
-              <FormField
-              control={form.control}
-              name="adopted"
-              render={({ field }) => (
-                <FormItem className="flex flex-col">
-                  <FormLabel>Adoptado</FormLabel>
-                  <FormControl>
-                    <Checkbox
-                      className="mr-3"
-                      id="civil-state-0"
-                    />
-                  </FormControl>
-                </FormItem>
-              )}
-            />
-            </div> 
+            </div>
 
             <div className="flex justify-between mt-4">
               <Button type="button" onClick={previousPage}>

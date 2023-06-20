@@ -28,6 +28,8 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/select";
+import http from "@/lib/http";
+import { addressTypes } from "../../page";
 
 export default function Page({ params: { id } }: { params: { id: string } }) {
   const contactAddressForm = useForm<ContactAddress>();
@@ -39,27 +41,21 @@ export default function Page({ params: { id } }: { params: { id: string } }) {
     data: ContactAddress,
     e: any
   ) => {
-    e.preventDefault();
+    e.preventDefault()
+    const address = { person: id, ...data }
+    const formData = new FormData();
+    for (const key in address) {
+      formData.append(key, address[key])
+    }
 
-    // const formDataFamily = new FormData()
-    // formDataFamily.append('person', id)
-    // formDataFamily.append('contract', JSON.stringify(data))
-
-    // LOGIC FOR SEND TO THE API......
-    toast({ title: "Form Send!", description: "Datos enviados correctamente" });
-    // LOGIC FOR SEND TO THE API......
-
-    // const createContract = await http('/contracts', {
-    //   method: 'POST',
-    //   body: formDataFamily
-    // })
-
-    // if (createContract.status === 200) {
-    //   router.push(`/persons/${id}`)
-    // }
-    // if (createContract.status === 400) {
-    //   toast({ title: 'Error!', description: 'Los datos no están en el formato requerido o hay datos faltantes' })
-    // }
+    const createAccreditation = await http("/addresses", { method: 'POST', body: formData })
+    
+    if (createAccreditation.status === 200) {
+      toast({ title: 'Éxito!', description: 'Dirección agregada correctamente' })
+      router.push(`/persons/${id}`) 
+    } else {
+      toast({ title: 'Error!', description: 'No se pudo agregar la dirección (datos inválidos o conflicto)' })
+    }
   };
 
   function previousPage() {
@@ -79,7 +75,20 @@ export default function Page({ params: { id } }: { params: { id: string } }) {
               <div className="grid grid-flow-row grid-cols-3 gap-5">
                 <FormField
                   control={form.control}
-                  name="address"
+                  name="name"
+                  render={({ field }) => (
+                    <FormItem className="flex flex-col">
+                      <FormLabel>Nombre</FormLabel>
+                      <FormControl>
+                        <Input {...field} />
+                      </FormControl>
+                    </FormItem>
+                  )}
+                />
+
+                <FormField
+                  control={form.control}
+                  name="line"
                   render={({ field }) => (
                     <FormItem className="flex flex-col">
                       <FormLabel>Dirección</FormLabel>
@@ -144,57 +153,32 @@ export default function Page({ params: { id } }: { params: { id: string } }) {
 
                 <FormField
                   control={form.control}
-                  name="phoneNumber"
+                  name="type"
                   render={({ field }) => (
                     <FormItem className="flex flex-col">
-                      <FormLabel>Télefono 1</FormLabel>
+                      <FormLabel>Tipo</FormLabel>
                       <FormControl>
-                        <Input {...field} />
+                        <Select onValueChange={field.onChange}>
+                          <SelectTrigger>
+                            <SelectValue />
+                          </SelectTrigger>
+                          <SelectContent>
+                            {Object.entries(addressTypes).map(([key, value]) => (
+                              <SelectItem
+                                key={`address-types-${key}`}
+                                value={key}
+                              >
+                                {value}
+                              </SelectItem>
+                            ))}
+                          </SelectContent>
+                        </Select>
                       </FormControl>
                     </FormItem>
                   )}
                 />
 
-                <FormField
-                  control={form.control}
-                  name="mobilePhoneNumber"
-                  render={({ field }) => (
-                    <FormItem className="flex flex-col">
-                      <FormLabel>Télefono 2</FormLabel>
-                      <FormControl>
-                        <Input {...field} />
-                      </FormControl>
-                    </FormItem>
-                  )}
-                />
-
-                <FormField
-                  control={form.control}
-                  name="personalEmail"
-                  render={({ field }) => (
-                    <FormItem className="flex flex-col">
-                      <FormLabel>Email personal</FormLabel>
-                      <FormControl>
-                        <Input {...field} />
-                      </FormControl>
-                    </FormItem>
-                  )}
-                />
-
-                <FormField
-                  control={form.control}
-                  name="institutionalEmail"
-                  render={({ field }) => (
-                    <FormItem className="flex flex-col">
-                      <FormLabel>Email institucional</FormLabel>
-                      <FormControl>
-                        <Input {...field} />
-                      </FormControl>
-                    </FormItem>
-                  )}
-                />
-
-                <FormField
+                {/* <FormField
                   control={form.control}
                   name="primary"
                   render={({ field }) => (
@@ -202,13 +186,14 @@ export default function Page({ params: { id } }: { params: { id: string } }) {
                       <FormLabel>Principal</FormLabel>
                       <FormControl>
                         <Checkbox
+                          checked={field.value}
+                          onCheckedChange={field.onChange}
                           className="mr-3"
-                          id="civil-state-0"
                         />
                       </FormControl>
                     </FormItem>
                   )}
-                />
+                /> */}
               </div>
               <div className="flex justify-between mt-4">
                 <Button type="button" onClick={previousPage}>

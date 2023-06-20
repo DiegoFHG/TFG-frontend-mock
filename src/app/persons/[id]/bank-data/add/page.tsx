@@ -21,6 +21,7 @@ import { Checkbox } from "@/components/checkbox";
 import { useRouter } from "next/navigation";
 import { useToast } from "@/components/use-toast";
 import { BankData } from "@/app/person-columns";
+import http from "@/lib/http";
 
 export default function Page({ params: { id } }: { params: { id: string } }) {
   const descendantForm = useForm<BankData>();
@@ -30,26 +31,30 @@ export default function Page({ params: { id } }: { params: { id: string } }) {
 
   const onSubmit: SubmitHandler<BankData> = async (data: BankData, e: any) => {
     e.preventDefault();
+    const bankAccount = { person: id, ...data };
+    const formData = new FormData();
+    for (const key in bankAccount) {
+      formData.append(key, bankAccount[key]);
+    }
 
-    // const formDataFamily = new FormData()
-    // formDataFamily.append('person', id)
-    // formDataFamily.append('contract', JSON.stringify(data))
+    const createBankAccount = await http("/bank-accounts", {
+      method: "POST",
+      body: formData,
+    });
 
-    // LOGIC FOR SEND TO THE API......
-    toast({ title: "Form Send!", description: "Datos enviados correctamente" });
-    // LOGIC FOR SEND TO THE API......
-
-    // const createContract = await http('/contracts', {
-    //   method: 'POST',
-    //   body: formDataFamily
-    // })
-
-    // if (createContract.status === 200) {
-    //   router.push(`/persons/${id}`)
-    // }
-    // if (createContract.status === 400) {
-    //   toast({ title: 'Error!', description: 'Los datos no están en el formato requerido o hay datos faltantes' })
-    // }
+    if (createBankAccount.status === 200) {
+      toast({
+        title: "Éxito!",
+        description: "Cuenta bancaria agregada correctamente",
+      });
+      router.push(`/persons/${id}`);
+    } else {
+      toast({
+        title: "Error!",
+        description:
+          "No se pudo agregar la cuenta bancaria (datos inválidos o conflicto)",
+      });
+    }
   };
 
   function previousPage() {
@@ -61,7 +66,6 @@ export default function Page({ params: { id } }: { params: { id: string } }) {
   return (
     <div className="pl-32 pr-32">
       <h1 className="mb-10 text-3xl">Agregar datos bancarios</h1>
-
       <Card>
         <CardContent className="p-5">
           <Form {...form}>
@@ -100,10 +104,7 @@ export default function Page({ params: { id } }: { params: { id: string } }) {
                     <FormItem className="flex flex-col">
                       <FormLabel>Principal</FormLabel>
                       <FormControl>
-                        <Checkbox
-                          className="mr-3"
-                          id="civil-state-0"
-                        />
+                        <Checkbox className="mr-3" id="civil-state-0" />
                       </FormControl>
                     </FormItem>
                   )}
